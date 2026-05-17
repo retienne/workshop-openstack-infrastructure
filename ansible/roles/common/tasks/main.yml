@@ -1,0 +1,47 @@
+---
+- name: Set SSH PasswordAuthentication to yes
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication yes'
+  notify: Restart SSH
+  when: enable_password_auth | bool
+
+- name: Set SSH PasswordAuthentication to yes in include file if exists
+  lineinfile:
+    path: /etc/ssh/sshd_config.d/60-cloudimg-settings.conf
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication yes'
+  ignore_errors: yes
+  notify: Restart SSH
+  when: enable_password_auth | bool
+
+- name: Set user password securely
+  user:
+    name: "{{ workshop_user }}"
+    password: "{{ workshop_password | password_hash('sha512') }}"
+  when: enable_password_auth | bool
+
+- name: Add alias "dataplatform" to /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ ansible_default_ipv4.address }}     dataplatform"
+    state: present
+
+- name: Set vm.max_map_count for Elasticsearch
+  sysctl:
+    name: vm.max_map_count
+    value: "{{ max_map_count }}"
+    state: present
+    reload: yes
+
+- name: Install utility packages
+  apt:
+    name:
+      - curl
+      - jq
+      - kafkacat
+      - tmux
+      - unzip
+    state: present
+    update_cache: yes

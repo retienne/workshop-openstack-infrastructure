@@ -1,0 +1,18 @@
+---
+workshop_env: "docker-1"
+workshop_envs:
+  - "{{ workshop_env }}"
+workshop_password: "abc123!"
+enable_password_auth: false # Set to true if you want to allow SSH password login
+platys_version: "2.4.0"
+github_owner: "gschmutz"
+github_project: "modern-database-workshop"
+workshop_user: "ubuntu"
+max_map_count: 262144
+platys_minio_aistor_license: "YOUR_LICENSE_HERE"
+
+# OpenStack specifics
+openstack_flavor: "a4-ram16-disk80-perf1"
+openstack_image: "Ubuntu 24.04 LTS Noble Numbat"
+openstack_keypair: "my-keypair" # Update this to your actual keypair name
+openstack_network_name: "ext-net1" # Default network name in Infomaniak

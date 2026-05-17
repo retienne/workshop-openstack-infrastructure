@@ -1,0 +1,96 @@
+---
+- name: Validate AIStor License
+  fail:
+    msg: "A valid AIStor license must be set in ansible/group_vars/all.yml for bigdata-spark-workshop."
+  when: github_project == 'bigdata-spark-workshop' and (platys_minio_aistor_license is not defined or platys_minio_aistor_license == '')
+
+- name: Download Platys
+  get_url:
+    url: "https://github.com/TrivadisPF/platys/releases/download/{{ platys_version }}/platys_{{ platys_version }}_linux_x86_64.tar.gz"
+    dest: /tmp/platys.tar.gz
+
+- name: Extract Platys
+  unarchive:
+    src: /tmp/platys.tar.gz
+    dest: /tmp
+    remote_src: yes
+
+- name: Install Platys binary
+  copy:
+    src: /tmp/platys
+    dest: /usr/local/bin/platys
+    mode: '0755'
+    owner: root
+    group: root
+    remote_src: yes
+
+- name: Clean up Platys archive
+  file:
+    path: /tmp/platys.tar.gz
+    state: absent
+
+- name: Clone the workshop repository
+  git:
+    repo: "https://github.com/{{ github_owner }}/{{ github_project }}.git"
+    dest: "/home/{{ workshop_user }}/{{ github_project }}"
+    update: yes
+    force: yes
+    depth: 1
+
+- name: Set correct ownership for workshop directory
+  file:
+    path: "/home/{{ workshop_user }}/{{ github_project }}"
+    owner: "{{ workshop_user }}"
+    group: "{{ workshop_user }}"
+    recurse: yes
+
+- name: Determine DATAPLATFORM_HOME directory
+  stat:
+    path: "/home/{{ workshop_user }}/{{ github_project }}/00-environment/{{ workshop_env | default('docker-1') }}"
+  register: dataplatform_dir_check
+
+- name: Create persistent environment variables script
+  copy:
+    dest: /etc/profile.d/platys-platform-env.sh
+    content: |
+      export PUBLIC_IP=$(curl -s ipinfo.io/ip)
+      export DOCKER_HOST_IP={{ ansible_default_ipv4.address }}
+      export DATAPLATFORM_HOME={{ dataplatform_dir_check.stat.path if dataplatform_dir_check.stat.exists else '/home/' ~ workshop_user ~ '/' ~ github_project ~ '/00-environment/docker' }}
+    mode: '0755'
+
+- name: Determine compose directory
+  stat:
+    path: "/home/{{ workshop_user }}/{{ github_project }}/00-environment/{{ item }}"
+  register: compose_dir_check
+  loop: "{{ workshop_envs }}"
+  tags: ['env', 'stop']
+
+- name: Show the resolved compose directory
+  debug:
+    msg: "Target compose directory for env {{ item.item }} is {{ item.stat.path if item.stat.exists else '/home/' ~ workshop_user ~ '/' ~ github_project ~ '/00-environment/docker' }}"
+  loop: "{{ compose_dir_check.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  tags: ['env', 'stop']
+
+- name: Startup Environment with Docker Compose (This may take 10+ minutes to pull images)
+  shell: sudo -E docker compose up -d
+  args:
+    chdir: "{{ item.stat.path if item.stat.exists else '/home/' ~ workshop_user ~ '/' ~ github_project ~ '/00-environment/docker' }}"
+  loop: "{{ compose_dir_check.results }}"
+  loop_control:
+    label: "{{ item.stat.path if item.stat.exists else '/home/' ~ workshop_user ~ '/' ~ github_project ~ '/00-environment/docker' }}"
+  environment:
+    PUBLIC_IP: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+    DOCKER_HOST_IP: "{{ ansible_default_ipv4.address }}"
+    PLATYS_MINIO_AISTOR_LICENSE: "{{ platys_minio_aistor_license }}"
+  tags: ['env']
+
+- name: Stop Environment with Docker Compose
+  shell: sudo -E docker compose down
+  args:
+    chdir: "{{ item.stat.path if item.stat.exists else '/home/' ~ workshop_user ~ '/' ~ github_project ~ '/00-environment/docker' }}"
+  loop: "{{ compose_dir_check.results }}"
+  loop_control:
+    label: "{{ item.stat.path if item.stat.exists else '/home/' ~ workshop_user ~ '/' ~ github_project ~ '/00-environment/docker' }}"
+  tags: ['stop']
