@@ -82,7 +82,8 @@ destroy: check-env ## Destroy the infrastructure and remove SSH known hosts
 ##@ Access & Monitoring
 
 status: check-env ## Quick overview of the OpenStack VM and Docker status
-	@./scripts/utils.sh status "$$(terraform output -raw instance_ip 2>/dev/null || true)" "$(PRIVATE_KEY)"
+	@ID=$$(terraform output -raw instance_id 2>/dev/null || true); \
+	./scripts/utils.sh status "$$(terraform output -raw instance_ip 2>/dev/null || true)" "$(PRIVATE_KEY)" "$$ID"
 
 open: ## Open the workshop landing page in your default browser
 	@./scripts/utils.sh open_browser "$$(terraform output -raw instance_ip 2>/dev/null || true)"

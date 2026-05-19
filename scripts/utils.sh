@@ -5,6 +5,7 @@
 #   $1 - COMMAND: The utility subcommand (update_hosts, setup_ssh, status, open_browser).
 #   $2 - ARG1: Varies based on command (IP address or Private Key Path).
 #   $3 - ARG2: Varies based on command (Private Key Path).
+#   $4 - ARG3: Varies based on command (VM ID for status).
 
 COMMAND="$1"
 
@@ -34,9 +35,18 @@ case "$COMMAND" in
     status)
         IP="$2"
         PRIVATE_KEY="$3"
+        VM_ID="$4"
         echo "=== OpenStack VM Status ==="
         if command -v openstack >/dev/null 2>&1; then
-            openstack server show dataplatform-workshop -c status -f value || echo "Unknown"
+            if [ -n "$VM_ID" ]; then
+                VM_STATUS=$(openstack server show "$VM_ID" -c status -f value 2>/dev/null || echo "Unknown")
+                echo "$VM_STATUS"
+                if [ "$VM_STATUS" = "SHUTOFF" ]; then
+                    echo "💡 Tip: The VM is paused. You can restart it by running 'make unpause'."
+                fi
+            else
+                echo "Unknown (VM ID not found in Terraform)"
+            fi
         else
             echo "Unknown (openstack CLI not installed)"
         fi
