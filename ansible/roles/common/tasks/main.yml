@@ -42,6 +42,7 @@
       - jq
       - kafkacat
       - tmux
+      - tree
       - unzip
     state: present
     update_cache: yes
