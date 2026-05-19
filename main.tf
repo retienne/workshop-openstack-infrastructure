@@ -52,3 +52,7 @@ resource "openstack_compute_instance_v2" "workshop_instance" {
 output "instance_ip" {
   value = openstack_compute_instance_v2.workshop_instance.access_ip_v4
 }
+
+output "instance_id" {
+  value = openstack_compute_instance_v2.workshop_instance.id
+}

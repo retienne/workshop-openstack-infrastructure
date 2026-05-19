@@ -59,12 +59,16 @@ stop: check-env ## Stop the running workshop environment containers
 ##@ Virtual Machine (Infra)
 
 pause: check-env check-openstack-cli ## Pause the OpenStack VM to save compute costs (retains disk state)
-	@echo "Pausing VM (dataplatform-workshop)..."
-	openstack server stop dataplatform-workshop
+	@ID=$$(terraform output -raw instance_id 2>/dev/null || true); \
+	if [ -z "$$ID" ]; then echo "Failed to get instance ID."; exit 1; fi; \
+	echo "Pausing VM (dataplatform-workshop)..."; \
+	openstack server stop "$$ID"
 
 unpause: check-env check-openstack-cli ## Unpause the OpenStack VM
-	@echo "Unpausing VM (dataplatform-workshop)..."
-	openstack server start dataplatform-workshop
+	@ID=$$(terraform output -raw instance_id 2>/dev/null || true); \
+	if [ -z "$$ID" ]; then echo "Failed to get instance ID."; exit 1; fi; \
+	echo "Unpausing VM (dataplatform-workshop)..."; \
+	openstack server start "$$ID"
 
 destroy: check-env ## Destroy the infrastructure and remove SSH known hosts
 	@IP=$$(terraform output -raw instance_ip 2>/dev/null || true); \
