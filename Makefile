@@ -95,9 +95,19 @@ connect: ## SSH into the provisioned machine
 		exit 1; \
 	fi; \
 	echo "Connecting to ubuntu@$$IP..."; \
-	printf "\033]0;ubuntu@dataplatform-workshop\007"; \
+	if [ -n "$$KONSOLE_DBUS_SESSION" ] && command -v qdbus >/dev/null 2>&1; then \
+		qdbus org.kde.konsole $$KONSOLE_DBUS_SESSION renameSession "ubuntu@dataplatform-workshop" >/dev/null 2>&1 || true; \
+	else \
+		printf "\033]0;ubuntu@dataplatform-workshop\007"; \
+		printf "\033]30;ubuntu@dataplatform-workshop\007"; \
+	fi; \
 	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $(PRIVATE_KEY) ubuntu@$$IP; \
-	printf "\033]0;%s\007" "$$(basename $$PWD)"
+	if [ -n "$$KONSOLE_DBUS_SESSION" ] && command -v qdbus >/dev/null 2>&1; then \
+		qdbus org.kde.konsole $$KONSOLE_DBUS_SESSION renameSession "$$(basename $$PWD)" >/dev/null 2>&1 || true; \
+	else \
+		printf "\033]0;%s\007" "$$(basename $$PWD)"; \
+		printf "\033]30;%s\007" "$$(basename $$PWD)"; \
+	fi
 
 ##@ Auto-Destruction (Linux with systemd only)
 
