@@ -35,17 +35,28 @@ resource "openstack_networking_secgroup_rule_v2" "workshop_sg_rule_tcp" {
   security_group_id = openstack_networking_secgroup_v2.workshop_sg.id
 }
 
-
+data "openstack_images_image_v2" "ubuntu" {
+  name        = local.vars.openstack_image
+  most_recent = true
+}
 
 resource "openstack_compute_instance_v2" "workshop_instance" {
   name            = "dataplatform-workshop"
-  image_name      = local.vars.openstack_image
   flavor_name     = local.vars.openstack_flavor
   key_pair        = local.vars.openstack_keypair
   security_groups = [openstack_networking_secgroup_v2.workshop_sg.name]
 
   network {
     name = local.vars.openstack_network_name
+  }
+
+  block_device {
+    uuid                  = data.openstack_images_image_v2.ubuntu.id
+    source_type           = "image"
+    destination_type      = "volume"
+    boot_index            = 0
+    delete_on_termination = true
+    volume_size           = 80
   }
 }
 
