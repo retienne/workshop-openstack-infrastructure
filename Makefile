@@ -95,7 +95,9 @@ connect: ## SSH into the provisioned machine
 		exit 1; \
 	fi; \
 	echo "Connecting to ubuntu@$$IP..."; \
-	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $(PRIVATE_KEY) ubuntu@$$IP
+	printf "\033]0;ubuntu@dataplatform-workshop\007"; \
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $(PRIVATE_KEY) ubuntu@$$IP; \
+	printf "\033]0;%s\007" "$$(basename $$PWD)"
 
 ##@ Auto-Destruction (Linux with systemd only)
 
