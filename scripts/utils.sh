@@ -44,11 +44,34 @@ case "$COMMAND" in
                 if [ "$VM_STATUS" = "SHUTOFF" ]; then
                     echo "💡 Tip: The VM is paused. You can restart it by running 'make unpause'."
                 fi
+                echo "=== Cinder Volume Status ==="
+                VOL_INFO=$(openstack server show "$VM_ID" -c volumes_attached -f value 2>/dev/null || echo "")
+                VOL_ID=$(echo "$VOL_INFO" | grep -oE "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}" | head -n 1)
+                if [ -n "$VOL_ID" ]; then
+                    VOL_STATUS=$(openstack volume show "$VOL_ID" -c status -f value 2>/dev/null || echo "Unknown")
+                    if [ "$VOL_STATUS" = "in-use" ]; then
+                        echo "in-use (Exists and is mounted/used by VM)"
+                    elif [ "$VOL_STATUS" = "available" ]; then
+                        echo "available (Exists but it's not mounted)"
+                    else
+                        echo "$VOL_STATUS"
+                    fi
+                else
+                    echo "Does not exist."
+                fi
             else
                 echo "Unknown (VM ID not found in Terraform)"
+                echo "=== Cinder Volume Status ==="
+                echo "Does not exist."
             fi
         else
             echo "Unknown (openstack CLI not installed)"
+        fi
+        echo "=== Disk Status ==="
+        if [ -z "$IP" ]; then
+            echo "Failed to get instance IP from Terraform."
+        else
+            ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -i "$PRIVATE_KEY" ubuntu@"$IP" 'df -h /' 2>/dev/null || echo "VM is offline or unreachable."
         fi
         echo "=== Docker Status ==="
         if [ -z "$IP" ]; then
