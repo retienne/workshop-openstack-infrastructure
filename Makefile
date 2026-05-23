@@ -68,7 +68,8 @@ unpause: check-env check-openstack-cli ## Unpause the OpenStack VM
 	@ID=$$(terraform output -raw instance_id 2>/dev/null || true); \
 	if [ -z "$$ID" ]; then echo "Failed to get instance ID."; exit 1; fi; \
 	echo "Unpausing VM (dataplatform-workshop)..."; \
-	openstack server start "$$ID"
+	openstack server start "$$ID"; \
+	echo "💡 Note: It may take a minute or two for the VM to fully boot and services to become available."
 
 destroy: check-env ## Destroy the infrastructure and remove SSH known hosts
 	@IP=$$(terraform output -raw instance_ip 2>/dev/null || true); \

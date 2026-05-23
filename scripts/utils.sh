@@ -71,13 +71,25 @@ case "$COMMAND" in
         if [ -z "$IP" ]; then
             echo "Failed to get instance IP from Terraform."
         else
-            ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -i "$PRIVATE_KEY" ubuntu@"$IP" 'df -h /' 2>/dev/null || echo "VM is offline or unreachable."
+            if ! ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -i "$PRIVATE_KEY" ubuntu@"$IP" 'df -h /' 2>/dev/null; then
+                if [ "$VM_STATUS" = "ACTIVE" ]; then
+                    echo "VM is starting up or unreachable (SSH not ready)."
+                else
+                    echo "VM is offline or unreachable."
+                fi
+            fi
         fi
         echo "=== Docker Status ==="
         if [ -z "$IP" ]; then
             echo "Failed to get instance IP from Terraform."
         else
-            ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -i "$PRIVATE_KEY" ubuntu@"$IP" 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"' 2>/dev/null || echo "VM is offline or unreachable."
+            if ! ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -i "$PRIVATE_KEY" ubuntu@"$IP" 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"' 2>/dev/null; then
+                if [ "$VM_STATUS" = "ACTIVE" ]; then
+                    echo "VM is starting up or unreachable (SSH not ready)."
+                else
+                    echo "VM is offline or unreachable."
+                fi
+            fi
         fi
         ;;
         
