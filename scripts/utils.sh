@@ -73,7 +73,7 @@ case "$COMMAND" in
         else
             if ! ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -i "$PRIVATE_KEY" ubuntu@"$IP" 'df -h /' 2>/dev/null; then
                 if [ "$VM_STATUS" = "ACTIVE" ]; then
-                    echo "VM is starting up or unreachable (SSH not ready)."
+                    echo "VM is unreachable via SSH (It may be booting up or shutting down)."
                 else
                     echo "VM is offline or unreachable."
                 fi
@@ -85,7 +85,7 @@ case "$COMMAND" in
         else
             if ! ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -i "$PRIVATE_KEY" ubuntu@"$IP" 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"' 2>/dev/null; then
                 if [ "$VM_STATUS" = "ACTIVE" ]; then
-                    echo "VM is starting up or unreachable (SSH not ready)."
+                    echo "VM is unreachable via SSH (It may be booting up or shutting down)."
                 else
                     echo "VM is offline or unreachable."
                 fi
