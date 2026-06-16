@@ -10,7 +10,7 @@ ANSIBLE_DIR = ansible
 PRIVATE_KEY ?= .ssh/id_rsa_workshop
 TF_DIR = .
 TTL ?= 4h
-AVAILABLE_WORKSHOPS ?= modern-database-workshop bigdata-spark-workshop
+AVAILABLE_WORKSHOPS ?= modern-database-workshop bigdata-spark-workshop stream-processing-workshop
 WORKSHOP ?= modern-database-workshop
 
 ##@ Main Workflow
